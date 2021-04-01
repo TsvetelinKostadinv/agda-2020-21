@@ -188,58 +188,27 @@ listToVec (x ,- xs) =
   m +N suc n
     QED
 
-
-{-
-<=-refl : (n : Nat) -> n <= n
-<=-refl = {!!}
-
-<=-antisym : {n m : Nat} -> n <= m -> m <= n -> n == m
-<=-antisym = {!!}
-
-<=-mono-left-+ : {n m : Nat} (k : Nat) -> n <= m -> k +N n <= k +N m
-<=-mono-left-+ = {!!}
-
--- you might need a lemma here
-<=-mono-right-+ : {n m : Nat} (k : Nat) -> n <= m -> n +N k <= m +N k
-<=-mono-right-+ = {!!}
-
--- multiplication using repeated addition
-_*N_ : Nat -> Nat -> Nat
-zero *N m = zero
-suc n *N m = m +N n *N m
-infixr 40 _*N_
-
--- EXERCISE: multiplication right identity
-*N-right-id : (n : Nat) -> n *N 1 == n
-*N-right-id = {!!}
-
--- multiplication distributes over addition
-*N-distrib-+N : (n m k : Nat) -> (n +N m) *N k == n *N k +N m *N k
-*N-distrib-+N = {!!}
-
--- use *N-distrib-+N
-*N-assoc : (n m k : Nat) -> (n *N m) *N k == n *N (m *N k)
-*N-assoc = {!!}
-
--- figure out what lemmas you need
-*N-commut : (n m : Nat) -> n *N m == m *N n
-*N-commut = {!!}
-
 length-+L-distrib : {A : Set} -> (xs ys : List A) -> length (xs +L ys) == length xs +N length ys
-length-+L-distrib = {!!}
+length-+L-distrib [] ys = refl
+length-+L-distrib (x ,- xs) ys = ap suc (length-+L-distrib xs ys)
 
-vecToList : {A : Set} {n : Nat} -> Vec A n -> List A
-vecToList = {!!}
+vecToList : {A : Set} {n : Nat} → Vec A n → List A
+vecToList [] = []
+vecToList (x ,- vec) = x ,- vecToList vec
 
-vecToList-listToVec-id : {A : Set} -> (xs : List A) -> vecToList (snd (listToVec xs)) == xs
-vecToList-listToVec-id = {!!}
+vecToList-listToVec-id : {A : Set} → (xs : List A) → vecToList (snd (listToVec xs)) == xs
+vecToList-listToVec-id [] = refl
+vecToList-listToVec-id (x ,- xs) = ap (x ,-_) (vecToList-listToVec-id xs)
 
 vTake : {A : Set} {m n : Nat} -> n <= m -> Vec A m -> Vec A n
-vTake = {!!}
+vTake ltezero xs = []
+vTake (ltesuc proof) (x ,- xs) = x ,- vTake proof xs
 
 -- you need to have implemented <=-refl before this
 vTake-id : {A : Set} (n : Nat) (v : Vec A n) -> vTake (<=-refl n) v == v
-vTake-id = {!!}
+vTake-id zero [] = refl
+vTake-id (suc n) (x ,- xs) = ap (x ,-_) (vTake-id n xs)
+{-
 
 -- m - n
 -- d for difference

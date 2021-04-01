@@ -154,12 +154,12 @@ alcohol верея = <>
 -- NatEq (suc n) (suc m) = NatEq n m -- (1 + n) == (1 + m)
 
 data _==_ {A : Set} : A -> A -> Set where
-  refl : (x : A) -> x == x
+  refl : {x : A} -> x == x
 
 infix 10 _==_
 
 _ : zero == zero
-_ = refl zero
+_ = refl
 
 -- zero == suc zero
 -- refl : (x : A) -> x == x
@@ -180,10 +180,10 @@ zeroIsNotOne ()
 -- 2 == 2
 -- n ~ 2
 bla : {n : Nat} -> n == 2 -> n +N 2 == 4
-bla (refl _) = refl 4
+bla (refl) = refl
 
 +N-left-zero : (n : Nat) -> zero +N n == n
-+N-left-zero n = refl n
++N-left-zero n = refl
 
 -- stuckness explanation
 -- ap time
@@ -192,7 +192,7 @@ bla (refl _) = refl 4
 -- suc n ~ suc m
 -- функционалност
 ap : {A B : Set} {x y : A} -> (f : A -> B) -> x == y -> f x == f y
-ap f (refl x) = refl (f x)
+ap f (refl) = refl
 
 -- n ~ suc n'
 -- n +N 0 == n
@@ -201,96 +201,96 @@ ap f (refl x) = refl (f x)
 -- <SPC> m .
 -- <SPC> m ,
 +N-right-zero : (n : Nat) -> n +N 0 == n
-+N-right-zero zero = refl zero
++N-right-zero zero = refl
 +N-right-zero (suc n') = ap suc (+N-right-zero n')
 
 -- Goal: suc (n' +N 0) == suc n'
 -- Have:      n' +N 0  ==     n'
-{-
 
-+N-assoc : (n m k : Nat) -> (n +N m) +N k == n +N (m +N k)
-+N-assoc n m k = {!!}
++N-assoc : (n m k : Nat) → ((n +N m) +N k) == (n +N (m +N k))
++N-assoc zero m k = refl
++N-assoc (suc n') m k = ap suc (+N-assoc n' m k)
 
--- STUDENTS TIME
-+-assoc : {A B C : Set} -> A + (B + C) -> (A + B) + C
-+-assoc = {!!}
++-assoc : {A B C : Set} → A + (B + C) → (A + B) + C
++-assoc (inl a) = inl (inl a)
++-assoc (inr (inl b)) = inl (inr b)
++-assoc (inr (inr c)) = inr c
 
-*-assoc : {A B C : Set} -> A * (B * C) -> (A * B) * C
-*-assoc = {!!}
+*-assoc : {A B C : Set} → A * (B * C) → (A * B) * C
+*-assoc (a , (b , c)) = (a , b) , c
 
-*-distrib-+ : {A B C : Set} -> A * (B + C) -> A * B + A * C
-*-distrib-+ = {!!}
+*-distrib-+ : {A B C : Set} → A * (B + C) → (A * B) + (A * C)
+*-distrib-+ (a , inl b) = inl (a , b)
+*-distrib-+ (a , inr c) = inr (a , c)
 
-+N-right-suc : (n m : Nat) -> suc (n +N m) == n +N suc m
-+N-right-suc = {!!}
++N-right-suc : (n m : Nat) → (suc (n +N m)) == (n +N suc m)
++N-right-suc zero m = refl
++N-right-suc (suc n') m = ap suc (+N-right-suc n' m)
 
-==-symm : {X : Set} {x y : X} -> x == y -> y == x
-==-symm = {!!}
+==-symm : {X : Set} {x y : X} → x == y → y == x
+==-symm refl = refl
 
-==-trans : {X : Set} {x y z : X} -> x == y -> y == z -> x == z
-==-trans = {!!}
+==-trans : {X : Set} {x y z : X} → x == y → y == z → x == z
+==-trans refl refl = refl
 
--- you'll need ==-symm, ==-trans, +N-right-zero and +N-right-suc here
-+N-commut : (n m : Nat) -> n +N m == m +N n
-+N-commut = {!!}
++N-commut : (n m : Nat) → (n +N m) == (m +N n)
++N-commut zero m = ==-symm (+N-right-zero m)
++N-commut (suc n') m = ==-trans (ap suc (+N-commut n' m))  (+N-right-suc m n')
 
 data List (a : Set) : Set where
   [] : List a
-  _,-_ : a -> List a -> List a
+  _,-_ : a → List a → List a
 
-infixr 11 _,-_
+infixr 20 _,-_ 
 
--- concatenate two lists
-_+L_ : {A : Set} -> List A -> List A -> List A
-xs +L ys = {!!}
+_+L_ : {A : Set} → List A → List A → List A
+[] +L ys = ys
+(x ,- xs) +L ys = x ,- (xs +L ys)
 
-_ : (3 ,- 5 ,- []) +L  (4 ,- 2 ,- []) == 3 ,- 5 ,- 4 ,- 2 ,- []
-_ = refl _
+_ : ((3 ,- (5 ,- [])) +L  (4 ,- (2 ,- []))) == (3 ,- (5 ,- (4 ,- (2 ,- []))))
+_ = refl
 
-_ : (<> ,- []) +L  (<> ,- []) == <> ,- <> ,- []
-_ = refl _
++L-assoc : {A : Set} (xs ys zs : List A) → ((xs +L ys) +L zs) == (xs +L (ys +L zs))
++L-assoc [] ys zs = refl
++L-assoc (x ,- xs) ys zs = ap ((_,-_ x)) (+L-assoc xs ys zs)
 
-infixr 12 _+L_
++L-right-id : {A : Set} (xs : List A) → (xs +L []) == xs
++L-right-id [] = refl
++L-right-id (x ,- xs) = ap (_,-_ x) (+L-right-id xs)
 
-+L-assoc : {A : Set} (xs ys zs : List A) -> (xs +L ys) +L zs == xs +L ys +L zs
-+L-assoc xs ys zs = {!!}
-
-+L-right-id : {A : Set} (xs : List A) -> xs +L [] == xs
-+L-right-id = {!!}
-
--- calculate the length of a list
-length : {A : Set} -> List A -> Nat
-length = {!!}
+length : {A : Set} → List A → Nat
+length [] = 0
+length (x ,- xs) = 1 +N (length xs)
 
 _ : length (<> ,- []) == 1
-_ = refl _
+_ = refl
+_ : length (3 ,- (5 ,- [])) == 2
+_ = refl
 
-_ : length (3 ,- 5 ,- []) == 2
-_ = refl _
+replicate : {A : Set} → Nat → A → List A
+replicate zero el = []
+replicate (suc len) el = el ,- (replicate len el)
 
--- create a list of only the given element, with length the given Nat
-replicate : {A : Set} -> Nat -> A -> List A
-replicate = {!!}
+_ : (replicate 2 <>) == (<> ,- (<> ,- []))
+_ = refl
 
-_ : replicate 2 <> == <> ,- <> ,- []
-_ = refl _
+length-replicate : {A : Set} {x : A} (n : Nat) → length (replicate n x) == n
+length-replicate {x} zero = refl
+length-replicate {x} (suc len) = ap suc (length-replicate len)
 
-_ : replicate 3 5 == 5 ,- 5 ,- 5 ,- []
-_ = refl _
+map : {A B : Set} → (f : A → B) → List A → List B
+map f [] = []
+map f (x ,- xs) = (f x) ,- (map f xs)
 
--- prove that the length of the replicated list is the original input number to replicate
-length-replicate : {A : Set} {x : A} (n : Nat) -> length (replicate n x) == n
-length-replicate = {!!}
+lift : {A B : Set} → (f : A → B) → (List A → List B)
+lift f = λ listA → map f listA
 
--- define All to calculate the type which that is inhabited when
--- P is true for all the elements of the given list
-All : {X : Set} (P : X -> Set) -> List X -> Set
-All = {!!}
+All : {X : Set} (P : X → Set) → List X → Set
+All {X} P [] = One
+All {X} P (x ,- xs) = (P x) * (All P xs)
 
--- prove that all of the elements of the result of replicate
--- are the same as the original element given to replicate
-replicate-all-==-orig : {A : Set} {x : A} (n : Nat) -> All (_== x) (replicate n x)
-replicate-all-==-orig = {!!}
--- this actually isn't necessary thanks to parametricity, but anyway
+replicate-all-==-orig : {A : Set} {x : A} (n : Nat) → All (_==_ x) (replicate n x)
+replicate-all-==-orig {A} {x} zero = <>
+replicate-all-==-orig {A} {x} (suc n) = refl , replicate-all-==-orig n
 
--}
+

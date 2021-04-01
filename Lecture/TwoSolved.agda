@@ -341,19 +341,28 @@ decEvenOrOdd = {!!}
 -- every natural number is either Even' or Odd'
 decEven'OrOdd' : (n : Nat) -> Even' n + Odd' n
 decEven'OrOdd' = {!!}
+-}
 
-<=-refl : (n : Nat) -> n <= n
-<=-refl = {!!}
+<=-refl : {n : Nat} -> n <= n
+<=-refl {zero} = ozero
+<=-refl {suc n} = osuc <=-refl
 
 <=-antisym : {n m : Nat} -> n <= m -> m <= n -> n == m
-<=-antisym = {!!}
-
+<=-antisym ozero ozero = refl zero
+<=-antisym (osuc NlteM) (osuc MlteN) rewrite <=-antisym NlteM MlteN = refl
+-- 
 <=-mono-left-+ : {n m : Nat} (k : Nat) -> n <= m -> k +N n <= k +N m
-<=-mono-left-+ = {!!}
+<=-mono-left-+ zero NlteM = NlteM
+<=-mono-left-+ (suc k) NlteM = osuc (<=-mono-left-+ k NlteM)
+
+<=-add : {n : Nat} (k : Nat) → k <= (n +N k)
+<=-add zero = ozero
+<=-add {n} (suc k) rewrite ==-symm (+N-right-suc n k) = osuc (<=-add {n} k) 
 
 -- you might need a lemma here
 <=-mono-right-+ : {n m : Nat} (k : Nat) -> n <= m -> n +N k <= m +N k
-<=-mono-right-+ = {!!}
+<=-mono-right-+ k ozero = <=-add k
+<=-mono-right-+ k (osuc NlteM) = osuc (<=-mono-right-+ k NlteM)
 
 -- multiplication using repeated addition
 _*N_ : Nat -> Nat -> Nat
@@ -363,7 +372,8 @@ infixr 40 _*N_
 
 -- EXERCISE: multiplication right identity
 *N-right-id : (n : Nat) -> n *N 1 == n
-*N-right-id = {!!}
+*N-right-id zero = {!   !}
+*N-right-id (suc n) = ap suc (*N-right-id n)
 
 -- EQUATIONAL REASONING UTILS
 -- YOU CAN USE THESE FOR *N TASKS, BUT THEY ARE NOT MANDATORY
@@ -401,18 +411,83 @@ infix 3 _QED
     QED
 
 -- multiplication distributes over addition
-*N-distrib-+N : (n m k : Nat) -> (n +N m) *N k == n *N k +N m *N k
-*N-distrib-+N = {!!}
+*N-distrib-+N-right : (n m k : Nat) -> (n +N m) *N k == n *N k +N m *N k
+*N-distrib-+N-right zero m k = refl
+*N-distrib-+N-right (suc n) m k rewrite *N-distrib-+N-right n m k = ==-symm (+N-assoc k (n *N k) (m *N k))
+
+*N-distrib-+N-left : (n m k : N) → (k *N (n +N m)) == (k *N n +N k *N m)
+*N-distrib-+N-left n m zero = refl
+*N-distrib-+N-left n m (suc k) = 
+  ((n +N m) +N (k *N (n +N m)))
+    =[ ap ((n +N m) +N_) (*N-distrib-+N-left n m k) ]
+  ((n +N m) +N ((k *N n) +N (k *N m)))\
+    =[ +N-assoc n m ((k *N n) +N (k *N m)) ]
+  (n +N (m +N ((k *N n) +N (k *N m))))
+    =[ ap ( n +N_) (==-symm (+N-assoc m (k *N n) (k *N m))) ]
+  (n +N ((m +N k *N n) +N k *N m))
+    =[ ap (n +N_) (ap (_+N k *N m) (+N-commut m (k *N n))) ] -- ugly
+  ((n +N ((k *N n +N m) +N k *N m)))
+    =[ ap (n +N_) (+N-assoc (k *N n) m (k *N m)) ]
+  (((n +N (k *N n +N (m +N k *N m)))))
+    =[ ==-symm (+N-assoc n (k *N n) (m +N (k *N m))) ]
+  (((((n +N k *N n) +N (m +N k *N m)))))
+  QED
 
 -- use *N-distrib-+N
 *N-assoc : (n m k : Nat) -> (n *N m) *N k == n *N (m *N k)
-*N-assoc = {!!}
+*N-assoc zero m k = refl
+*N-assoc (suc n) m k =
+  (m +N (n *N m)) *N k
+    =[ *N-distrib-+N-right m (n *N m) k ]
+  ap ((m *N k) +N_) (*N-assoc n m k)
 
--- figure out what lemmas you need
-*N-commut : (n m : Nat) -> n *N m == m *N n
-*N-commut = {!!}
+*N-right-zero : (n : N) → n *N zero ≡ zero
+*N-right-zero zero = refl
+*N-right-zero (suc n) = *N-right-zero n
 
--}
+add-same-double : (n : N) → (n +N n) ≡ n *N 2
+add-same-double zero = refl
+add-same-double (suc n) = 
+  (suc n) +N (suc n)
+    =[ ≡-symm (+N-right-suc (suc n) n) ]
+  suc (suc (n +N n))
+    =[ ap (2 +N_) (add-same-double n)  ]
+  (2 +N (n *N 2))
+    =[ refl ]
+  (suc n) *N 2
+    QED
+
+*N-right-suc : (n m : N) → (m +N (m *N n)) ≡ (m *N (suc n))
+*N-right-suc zero m =
+  m +N (m *N zero)
+    =[ ap (m +N_ ) (*N-right-zero m) ]
+  (m +N zero)
+    =[ 0-plus-comm-right ]
+  m
+    =[ ≡-symm (*N-right-id m) ]
+  m *N 1
+  QED
+*N-right-suc (suc n) m =
+  (m +N (m *N (suc n)))
+    =[ ap (m +N_) (≡-symm (*N-right-suc n m)) ]
+  (m +N (m +N (m *N n)))
+    =[ ≡-symm (+N-assoc m m (m *N n)) ]
+  ((m +N m) +N (m *N n))
+    =[ ap (_+N (m *N n)) (add-same-double m) ]
+  (m *N 2 +N m *N n)
+    =[ ≡-symm (*N-distrib-+N-left 2 n m) ]
+  (m *N suc (suc n))
+    QED
+
+*N-commut : (n m : N) → n *N m ≡ m *N n
+*N-commut zero m = ≡-symm (*N-right-zero m) 
+*N-commut (suc n) m =
+  (m +N (n *N m))
+    =[ ap (m +N_) (*N-commut n m) ]
+  (m +N (m *N n))
+    =[ *N-right-suc n m ]
+  m *N suc n
+  QED
 
 {-
 -- sigma
