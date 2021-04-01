@@ -31,8 +31,6 @@ _ = refl
 
 toNat : Bin -> Nat
 toNat end = 0
-toNat (end O) = 0
-toNat (end I) = 1
 toNat (n O) = (toNat n) +N toNat n
 toNat (n I) = Nat.suc (toNat n +N toNat n)
 
@@ -74,9 +72,9 @@ toNat-suc (b I) = helper b where
   helper end = refl
   helper (b O) = 
     toNat (b I) +N toNat (b I)
-      =[ ap (toNat (b I) +N_) (to-nat-trailing-1 b) >=
+      =[]
     toNat (b I) +N Nat.suc (toNat (b O))
-      =[ ap (_+N Nat.suc (toNat (b O))) (to-nat-trailing-1 b) >=
+        =[]
     Nat.suc (toNat (b O) +N Nat.suc (toNat (b O)))
       =[ Nat.+N-right-suc (Nat.suc (toNat (b O))) (toNat (b O)) >=
     Nat.suc (Nat.suc (toNat (b O) +N toNat (b O)))
@@ -207,25 +205,12 @@ fromNat-+N-+B-commutes (Nat.suc n) (Nat.suc m) =
     QED
   )
 
-reduction-toNat-b-0 : (b : Bin ) → toNat (b O) == toNat b +N toNat b
-reduction-toNat-b-0 end = refl
-reduction-toNat-b-0 (b O) = refl
-reduction-toNat-b-0 (b I) = refl
-
-reduction-toNat-b-1 : (b : Bin ) → toNat (b I) ==  Nat.suc (toNat b +N toNat b)
-reduction-toNat-b-1 end = refl
-reduction-toNat-b-1 (b O) = refl
-reduction-toNat-b-1 (b I) = refl
-
-reduction-suc-b-0 : (b : Bin ) → suc (b O) == b I
-reduction-suc-b-0 b = refl
-
 from-to-id-Can : (b : Bin) -> Can b -> fromNat (toNat b) == b
 from-to-id-Can end zero = refl
 from-to-id-Can end (leadingOne ()) -- required for some reason
 from-to-id-Can (b O) (leadingOne (x O)) = 
   fromNat (toNat (b O))
-    =[ ap fromNat (reduction-toNat-b-0 b) >=
+    =[]
   fromNat (toNat b +N toNat b)
     =[ fromNat-+N-+B-commutes (toNat b) (toNat b) >=
   fromNat (toNat b) +B fromNat (toNat b)
@@ -239,11 +224,15 @@ from-to-id-Can (b O) (leadingOne (x O)) =
 from-to-id-Can (end I) (leadingOne endI) = refl
 from-to-id-Can (b I) (leadingOne (x I)) = 
   fromNat (toNat (b I))
-    =[ ap fromNat (reduction-toNat-b-1 b) >=
+    =[]
   suc (fromNat (toNat b +N toNat b))
-    =[ ap suc (ap fromNat (==-symm (reduction-toNat-b-0 b))) >=
-  suc (fromNat (toNat (b O)))
-    =[ {!  !} >=
+    =[ ap suc (fromNat-+N-+B-commutes (toNat b) (toNat b)) >=
+  suc (fromNat (toNat b) +B fromNat (toNat b))
+    =[ ap suc (ap (fromNat (toNat b) +B_) (from-to-id-Can b (leadingOne x))) >=
+  suc (fromNat (toNat b) +B b)
+    =[ ap suc (ap (_+B b) (from-to-id-Can b (leadingOne x))) >=
+  suc (b +B b)
+    =[ ap suc (+B-same-shift b x) >=
   b I
     QED
 
