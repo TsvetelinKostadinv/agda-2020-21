@@ -46,10 +46,13 @@ _ : LeqNat 3 5
 _ = <>
 
 decLeqNat : (n m : Nat) -> LeqNat n m + LeqNat m n
-decLeqNat n m = {!!}
+decLeqNat zero m = inl <>
+decLeqNat (suc n) zero = inr <>
+decLeqNat (suc n) (suc m) = decLeqNat n m
 
 <=-LeqNat : {n m : Nat} -> n <= m -> LeqNat n m
-<=-LeqNat p = {!!}
+<=-LeqNat ozero = <>
+<=-LeqNat (osuc p) = <=-LeqNat p
 
 module
   Sorting
@@ -71,7 +74,6 @@ module
 
   data BST (lo hi : Bound) : Set where
     empty : LeqBound lo hi -> BST lo hi
-
     node :
       (k : Key) ->
       (left : BST lo (inKey k)) ->
@@ -81,16 +83,24 @@ module
   -- you can use _<=?_ to compare two values
   insert :
     {lo hi : Bound} (k : Key) ->
-    LeqBound lo (inKey k) -> LeqBound (inKey k) hi ->
-    BST lo hi -> BST lo hi
-  insert = {!!}
+    LeqBound lo (inKey k) -> 
+    LeqBound (inKey k) hi ->
+    BST lo hi -> 
+    BST lo hi
+  insert k lok khi (empty x) = node k (empty lok) (empty khi)
+  insert k lok khi (node root left right) with k <=? root
+  insert k lok khi (node root left right) | inl x = node root (insert k lok x left) right -- k <= root
+  insert k lok khi (node root left right) | inr x = node root left (insert k x khi right) -- k >= root
 
   makeTree : List Key -> BST -inf +inf
-  makeTree = {!!}
+  makeTree [] = empty <>
+  makeTree (x ,- xs) = insert x <> <> (makeTree xs)
 
   -- use the same idea as in BST to define "ordered lists"
   -- be careful about what constraints you need in your recursive case!
   data OList (lo hi : Bound) : Set where
+    empty : LeqBound lo hi -> OList lo hi
+    ocons : (k : Key) -> LeqBound lo (inKey k) -> OList (inKey k) hi -> OList lo hi
 
   -- append ordered lists
   -- note that we require a key to "bridge" the two lists
@@ -98,10 +108,12 @@ module
   -- append : {lo mid hi : Bound} -> OList lo mid -> OList mid hi -> OList lo hi
   -- and see where you get stuck
   appendKeyed : {lo hi : Bound} -> (k : Key) -> OList lo (inKey k) -> OList (inKey k) hi -> OList lo hi
-  appendKeyed = {!!}
+  appendKeyed k (empty leqbK) oys = ocons k leqbK oys
+  appendKeyed k (ocons x lo<=x oxs) oys = ocons x lo<=x (appendKeyed k oxs oys)
 
   flatten : {lo hi : Bound} -> BST lo hi -> OList lo hi
-  flatten = {!!}
+  flatten (empty x) = empty x
+  flatten (node k left right) = appendKeyed k (flatten left) (flatten right)
 
   sort : List Key -> OList -inf +inf
   sort xs = flatten (makeTree xs)
@@ -126,7 +138,6 @@ two = node 2 one three
 Dec : (A : Set) -> Set
 Dec A = (A -> Zero) + A
 
-{-
 
 -- used a module to introduce global vars
 -- in here, you can compare values for equality with _==?_
@@ -142,31 +153,56 @@ module listy {A : Set} {_==?_ : (x y : A) -> Dec (x == y)} where
     there : {y : A} {xs : List A} -> x In xs -> x In (y ,- xs)
 
   +L-monoL-In : {y : A} {ys : List A} -> (xs : List A) -> y In ys -> y In xs +L ys
-  +L-monoL-In = {!!}
+  +L-monoL-In [] yInYs = yInYs
+  +L-monoL-In (x ,- xs) yInYs = there (+L-monoL-In xs yInYs)
 
   +L-splits-In : {x : A} (xs ys : List A) -> x In xs +L ys -> x In xs + x In ys
-  +L-splits-In = {!!}
+  +L-splits-In [] ys xInSum = inr xInSum
+  +L-splits-In (x ,- xs) ys here = inl here
+  +L-splits-In (headXS ,- xs) ys (there xInSum) with +L-splits-In xs ys xInSum
+  +L-splits-In (headXS ,- xs) ys (there xInSum) | inl inXS = inl (there inXS)
+  +L-splits-In (headXS ,- xs) ys (there xInSum) | inr inYS = inr inYS
 
   notIn[] : {x : A} -> x In [] -> Zero
-  notIn[] = {!!}
+  notIn[] ()
 
   nowhere : {x y : A} {ys : List A} -> (x == y -> Zero) -> (x In ys -> Zero) -> x In y ,- ys -> Zero
-  nowhere = {!!}
+  nowhere xyZero xInYSZero here = xyZero refl
+  nowhere xyZero xInYSZero (there xInYYS) = xInYSZero xInYYS
 
   -- if there is one, return the first x in the list
   find : (x : A) (xs : List A) -> Dec (x In xs)
-  find = {!!}
+  find x [] = inl notIn[]
+  find x (x1 ,- xs) with x ==? x1
+  find x (x1 ,- xs) | inl no with find x xs
+  find x (x1 ,- xs) | inl no | inl notInTail = inl (nowhere no notInTail)
+  find x (x1 ,- xs) | inl no | inr x2 = inr (there x2)
+  find x (x ,- xs) | inr refl = inr here
 
   -- delete all the occurrences of x in the list
   remove : (x : A) -> (xs : List A) -> List A
-  remove = {!!}
+  remove x [] = []
+  remove x (head ,- xs) with x ==? head 
+  remove x (head ,- xs) | inl no = head ,- remove x xs
+  remove x (x ,- xs) | inr refl = remove x xs
 
+  -- You don't say
   remove-removes : (xs : List A) -> (x : A) -> x In remove x xs -> Zero
-  remove-removes = {!!}
+  remove-removes [] x ()
+  remove-removes (head ,- xs) x with x ==? head
+  remove-removes (head ,- xs) x | inl no with find x (remove x xs)
+  remove-removes (head ,- xs) x | inl no | inl notInTail = nowhere no notInTail -- nowhere no notInTail
+  remove-removes (head ,- xs) x | inl no | inr inTail = λ _ -> remove-removes xs x inTail
+  remove-removes (x ,- xs) x | inr refl = remove-removes xs x
 
   remove-keeps : (xs : List A) (y : A) -> y In xs -> (x : A) -> (x == y -> Zero) -> y In remove x xs
-  remove-keeps = {!!}
+  remove-keeps [] y () x x!=y
+  remove-keeps (y ,- xs) y here x x!=y with x ==? y
+  remove-keeps (y ,- xs) y here x x!=y | inl no = {!   !}
+  remove-keeps (y ,- xs) y here x x!=y | inr yes = {!   !}
+  remove-keeps (x1 ,- xs) y (there yInXS) x x!=y = {!   !}
 
+{-
   -- xs Sub ys - xs is a subsequence of ys
   -- [] Sub []
   -- 5 ,- [] Sub 5 ,- []
