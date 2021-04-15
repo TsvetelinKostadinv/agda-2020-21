@@ -198,11 +198,12 @@ module listy {A : Set} {_==?_ : (x y : A) -> Dec (x == y)} where
   remove-keeps : (xs : List A) (y : A) -> y In xs -> (x : A) -> (x == y -> Zero) -> y In remove x xs
   remove-keeps [] y () x x!=y
   remove-keeps (y ,- xs) y here x x!=y with x ==? y
-  remove-keeps (y ,- xs) y here x x!=y | inl no = {!   !}
-  remove-keeps (y ,- xs) y here x x!=y | inr yes = {!   !}
-  remove-keeps (x1 ,- xs) y (there yInXS) x x!=y = {!   !}
+  remove-keeps (y ,- xs) y here x x!=y | inl no = here
+  remove-keeps (y ,- xs) y here .y x!=y | inr refl = zero-elim (x!=y refl)
+  remove-keeps (x1 ,- xs) y (there yInXS) x x!=y with x ==? x1
+  remove-keeps (x1 ,- xs) y (there yInXS) x x!=y | inl no = there (remove-keeps xs y yInXS x x!=y)
+  remove-keeps (x ,- xs) y (there yInXS) .x x!=y | inr refl = remove-keeps xs y yInXS x x!=y
 
-{-
   -- xs Sub ys - xs is a subsequence of ys
   -- [] Sub []
   -- 5 ,- [] Sub 5 ,- []
@@ -216,41 +217,65 @@ module listy {A : Set} {_==?_ : (x y : A) -> Dec (x == y)} where
 
   infix 10 _Sub_
 
-  s[]-all : (xs : List A) -> [] Sub xs
-  s[]-all = {!!}
+  s[]-all : {xs : List A} -> [] Sub xs
+  s[]-all {[]} = s[]
+  s[]-all {x ,- xs} = s-skip (s[]-all {xs})
 
   Sub-refl : (xs : List A) -> xs Sub xs
-  Sub-refl = {!!}
+  Sub-refl [] = s[]
+  Sub-refl (x ,- xs) = s-cons (Sub-refl xs)
 
   -- try to make the definition "as lazy" as possible - meaning pattern matching on as few things as possible
   -- this will affect your proof for Sub-trans-assoc
   Sub-trans : {xs ys zs : List A} -> xs Sub ys -> ys Sub zs -> xs Sub zs
-  Sub-trans = {!!}
+  Sub-trans xsSubYs s[] = xsSubYs
+  Sub-trans (s-cons xsSubYs) (s-cons ysSubZs) = s-cons (Sub-trans xsSubYs ysSubZs)
+  Sub-trans (s-skip xsSubYs) (s-cons ysSubZs) = s-skip (Sub-trans xsSubYs ysSubZs)
+  Sub-trans xsSubYs (s-skip ysSubZs) = s-skip (Sub-trans  xsSubYs ysSubZs)
 
   +L-monoL-Sub : (xs ys : List A) -> xs Sub (xs +L ys)
-  +L-monoL-Sub = {!!}
+  +L-monoL-Sub [] ys = s[]-all
+  +L-monoL-Sub (x ,- xs) ys = s-cons (+L-monoL-Sub xs ys)
 
   +L-monoR-Sub : (xs ys : List A) -> xs Sub (ys +L xs)
-  +L-monoR-Sub = {!!}
+  +L-monoR-Sub xs [] = Sub-refl xs
+  +L-monoR-Sub [] (y ,- ys) = s-skip s[]-all
+  +L-monoR-Sub (x ,- xs) (y ,- ys) = s-skip (+L-monoR-Sub (x ,- xs) ys)
 
   Sub-all-In : {xs ys : List A} -> xs Sub ys -> {x : A} -> x In xs -> x In ys
-  Sub-all-In = {!!}
+  Sub-all-In (s-cons xsSubYs) {x} here = here
+  Sub-all-In (s-skip xsSubYs) {x} here = there (Sub-all-In xsSubYs here)
+  Sub-all-In (s-cons xsSubYs) {x} (there xInXs) = there (Sub-all-In xsSubYs xInXs)
+  Sub-all-In (s-skip xsSubYs) {x} (there xInXs) = there (Sub-all-In xsSubYs (there xInXs))
 
   remove-Sub : (x : A) (xs : List A) -> remove x xs Sub xs
-  remove-Sub = {!!}
+  remove-Sub x [] = s[]
+  remove-Sub x (x1 ,- xs) with x ==? x1
+  remove-Sub x (x1 ,- xs) | inl no = s-cons (remove-Sub x xs)
+  remove-Sub x (x ,- xs) | inr refl = s-skip (remove-Sub x xs)
 
   -- might need to make an implicit arg explicit in one of the cases
   remove-preserves-Sub : {xs ys : List A} (x : A) -> xs Sub ys -> remove x xs Sub ys
-  remove-preserves-Sub = {!!}
+  remove-preserves-Sub {xs} x xsSubYs = Sub-trans (remove-Sub x xs) xsSubYs
 
   ,-Sub-remove : {xs ys : List A} (x : A) -> xs Sub x ,- ys -> remove x xs Sub ys
-  ,-Sub-remove = {!!}
+  ,-Sub-remove x (s-cons xsSubXYs) with x ==? x
+  ,-Sub-remove x (s-cons xsSubXYs) | inl no = zero-elim (no refl)
+  ,-Sub-remove x (s-cons xsSubXYs) | inr refl = remove-preserves-Sub x xsSubXYs
+  ,-Sub-remove x (s-skip xsSubXYs) = remove-preserves-Sub x xsSubXYs
 
   Sub-trans-assoc :
     {xs ys zs vs : List A} (sub1 : xs Sub ys) (sub2 : ys Sub zs) (sub3 : zs Sub vs) ->
     Sub-trans (Sub-trans sub1 sub2) sub3 == Sub-trans sub1 (Sub-trans sub2 sub3)
-  Sub-trans-assoc = {!!}
+  Sub-trans-assoc xsSubYs ysSubZs s[] = refl
+  Sub-trans-assoc (s-cons xsSubYs) (s-cons ysSubZs) (s-cons zsSubVs) = ap s-cons (Sub-trans-assoc xsSubYs ysSubZs zsSubVs)
+  Sub-trans-assoc (s-skip xsSubYs) (s-cons ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc xsSubYs ysSubZs zsSubVs)
+  Sub-trans-assoc s[] (s-skip ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc s[] ysSubZs zsSubVs)
+  Sub-trans-assoc (s-cons xsSubYs) (s-skip ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc (s-cons xsSubYs) ysSubZs zsSubVs)
+  Sub-trans-assoc (s-skip xsSubYs) (s-skip ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc (s-skip xsSubYs) ysSubZs zsSubVs)
+  Sub-trans-assoc xsSubYs ysSubZs (s-skip zsSubVs) = ap s-skip (Sub-trans-assoc xsSubYs ysSubZs zsSubVs)
 
+{-
 decNatEq : (n m : Nat) -> Dec (n == m)
 decNatEq = {!!}
 
