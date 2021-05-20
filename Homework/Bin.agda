@@ -66,8 +66,9 @@ to-nat-trailing-1 (b I) = refl
 
 toNat-suc : (b : Bin) -> toNat (suc b) == Nat.suc (toNat b)
 toNat-suc end = refl
-toNat-suc (b O) = to-nat-trailing-1 b 
-toNat-suc (b I) = helper b where
+toNat-suc (b O) = refl
+toNat-suc (b I) rewrite toNat-suc b = ap Nat.suc (Nat.+N-commut (toNat b) (Nat.suc (toNat b)))
+  where
   helper : (b : Bin) → toNat (suc b O) == Nat.suc (toNat (b I))
   helper end = refl
   helper (b O) = 
@@ -96,7 +97,7 @@ to-from-id (Nat.suc n) =
     =[ toNat-suc ((fromNat n)) >=
   Nat.suc (toNat (fromNat n))
     =[ ap Nat.suc (to-from-id n) >=
-    Nat.suc n
+  Nat.suc n
   QED
 
 from-to-counterexample : Bin >< \b -> fromNat (toNat b) == b -> Zero
@@ -120,7 +121,8 @@ suc-LeadingOne (b I) (leadingB I) = suc-LeadingOne b leadingB O
 suc-Can : (b : Bin) -> Can b -> Can (suc b)
 suc-Can end zero = leadingOne endI
 suc-Can end (leadingOne x) = leadingOne endI
-suc-Can b (leadingOne x) = leadingOne (suc-LeadingOne b x)
+suc-Can (b O) (leadingOne x) = leadingOne ((suc-LeadingOne (b O) x))
+suc-Can (b I) (leadingOne x) = leadingOne (suc-LeadingOne (b I) x)
 
 fromNat-Can : (n : Nat) -> Can (fromNat n)
 fromNat-Can Nat.zero = zero
@@ -128,11 +130,12 @@ fromNat-Can (Nat.suc n) = suc-Can (fromNat n) (fromNat-Can n)
 
 _+B_ : Bin -> Bin -> Bin
 end +B b = b
-a +B end = a
-(a O) +B (b O) = (a +B b) O
-(a O) +B (b I) = (a +B b) I
-(a I) +B (b O) = (a +B b) I
-(a I) +B (b I) = ( suc (a +B b) ) O
+a O +B end = a O
+a O +B b O = (a +B b) O
+a O +B b I = (a +B b) I
+a I +B end = a I
+a I +B b O = (a +B b) I
+a I +B b I = ( suc (a +B b) ) O
 
 infixr 11 _+B_
 
