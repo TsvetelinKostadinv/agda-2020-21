@@ -128,14 +128,14 @@ module Three where
   Obj THREE = Three
   _~>_ THREE = Arrow
   id~> THREE = idArr
-  (THREE >~> idArr _) (idArr x) = idArr x
-  (THREE >~> idArr .zero) zero-one = zero-one
-  (THREE >~> idArr .one) one-two = one-two
-  (THREE >~> idArr .zero) zero-two = zero-two
-  (THREE >~> zero-one) (idArr .one) = zero-one
-  (THREE >~> zero-one) one-two = zero-two
-  (THREE >~> one-two) (idArr .two) = one-two
-  (THREE >~> zero-two) (idArr .two) = zero-two
+  _>~>_ THREE (idArr _) (idArr x) = idArr x
+  _>~>_ THREE (idArr .zero) zero-one = zero-one
+  _>~>_ THREE (idArr .one) one-two = one-two
+  _>~>_ THREE (idArr .zero) zero-two = zero-two
+  _>~>_ THREE (zero-one) (idArr .one) = zero-one
+  _>~>_ THREE (zero-one) one-two = zero-two
+  _>~>_ THREE (one-two) (idArr .two) = one-two
+  _>~>_ THREE (zero-two) (idArr .two) = zero-two
   left-id THREE (idArr _) = refl
   left-id THREE zero-one = refl
   left-id THREE one-two = refl
@@ -209,50 +209,69 @@ Nat+N-Monoid : Monoid
 Monoid.cat Nat+N-Monoid = Nat+N-Cat
 Monoid.Obj-is-One Nat+N-Monoid = refl
 
-{-
 -- a category with one object
 -- *
 ONE : Category
 Obj ONE = One
 _~>_ ONE _ _ = One
-id~> ONE = {!!}
-_>~>_ ONE = {!!}
-left-id ONE = {!!}
-right-id ONE = {!!}
-assoc ONE = {!!}
+id~> ONE <> = <>
+_>~>_ ONE <> <> = <>
+left-id ONE <> = refl
+right-id ONE <> = refl
+assoc ONE <> <> <> = refl
 
 -- a category with two objects
 -- * --> *
 module TwoCat where
   data ArrTwo : Two -> Two -> Set where
+    idArr : { x : Two} -> ArrTwo x x
+    tt-ff : ArrTwo tt ff
 
   TWO : Category
   Obj TWO = Two
   _~>_ TWO = ArrTwo
-  id~> TWO = {!!}
-  _>~>_ TWO = {!!}
-  left-id TWO = {!!}
-  right-id TWO = {!!}
-  assoc TWO = {!!}
+  id~> TWO x = idArr
+  _>~>_ TWO (idArr) idArr = idArr
+  _>~>_ TWO (idArr) tt-ff = tt-ff
+  _>~>_ TWO (tt-ff) idArr = tt-ff
+  left-id TWO idArr = refl
+  left-id TWO tt-ff = refl
+  right-id TWO idArr = refl
+  right-id TWO tt-ff = refl
+  assoc TWO idArr idArr idArr = refl
+  assoc TWO idArr idArr tt-ff = refl
+  assoc TWO idArr tt-ff idArr = refl
+  assoc TWO tt-ff idArr idArr = refl
 
 -- we'll be making this a monoid, so the objects will be One for sure
 -- with our arrows being List A s
 List-+L-Cat : Set -> Category
-List-+L-Cat = {!!}
+List-+L-Cat A = ListACat where
+  ListACat : Category
+  Obj ListACat = One
+  _~>_ ListACat <> <> = List A
+  id~> ListACat <> = []
+  _>~>_ ListACat = Lib.List._+L_
+  left-id ListACat list = refl
+  right-id ListACat list = +L-right-id list
+  assoc ListACat = +L-assoc
 
 List-+L-Monoid : Set -> Monoid
-List-+L-Monoid = {!!}
+List-+L-Monoid A = listAMonoid where
+  listAMonoid : Monoid
+  Monoid.cat listAMonoid = List-+L-Cat A
+  Monoid.Obj-is-One listAMonoid = refl
 
 -- a Discrete category is one in which the only arrows are the identity arrows
 -- an example of such a category is the one formed with an arbitrary type, and _==_ as arrows
 Discrete== : Set -> Category
 Obj (Discrete== X) = X
 _~>_ (Discrete== X) = _==_
-id~> (Discrete== X) = {!!}
-_>~>_ (Discrete== X) = {!!}
-left-id (Discrete== X) = {!!}
-right-id (Discrete== X) = {!!}
-assoc (Discrete== X) = {!!}
+id~> (Discrete== X) x = refl
+_>~>_ (Discrete== X) = ==-trans
+left-id (Discrete== X) refl = refl
+right-id (Discrete== X) refl = refl
+assoc (Discrete== X) refl refl refl = refl
 
 -- we can make a category with whatever arrows we like
 -- if we have no objects
@@ -265,6 +284,7 @@ left-id (EMPTY X) = {!!}
 right-id (EMPTY X) = {!!}
 assoc (EMPTY X) = {!!}
 
+{-
 -- we can always "flip" the arrows in a category, to get a "dual" notion of something
 -- very powerful concept
 Op : Category -> Category

@@ -106,11 +106,15 @@ length (ts -, _) = suc (length ts)
 
 ix : (n : Nat) (ctxt : Context) -> (Lt n (length ctxt)) -> Type
 ix zero (ts -, x) p = x
+ix zero [] ()
 ix (suc n) (ts -, x) p = ix n ts p
+ix (suc n) [] ()
 
 ixIn : (n : Nat) (ctxt : Context) (p : Lt n (length ctxt)) -> ix n ctxt p In ctxt
 ixIn zero (ctxt -, x) p = Z
+ixIn zero [] ()
 ixIn (suc n) (ctxt -, x) p = S (ixIn n ctxt p)
+ixIn (suc n) [] ()
 
 `_ : {ctxt : Context} (n : Nat) -> {p : Lt n (length ctxt)} -> Lam ctxt (ix n ctxt p)
 ` n = var (ixIn n _ _)
@@ -131,27 +135,27 @@ _ = lam (` 0)
 _ : Lam [] (alpha => beta => alpha)
 _ = lam (lam (` 1))
 
-{-
 -- a renaming is a way for us to send any type in one context to another
 Renaming : Context -> Context -> Set
 Renaming gamma delta = {tau : Type} -> tau In gamma -> tau In delta
 
 -- the identity renaming, does nothing
 idRename : {gamma : Context} -> Renaming gamma gamma
-idRename = {!!}
+idRename tauInGamma = tauInGamma
 
 -- a renaming that shifts all the variables up by one
 -- useful when we encounter a lambda, which introduces a free variable
 -- to the head of our context
 shift1Rename : {gamma : Context} {sigma : Type} -> Renaming gamma (gamma -, sigma)
-shift1Rename = ?
+shift1Rename tauInGamma = S tauInGamma
 
 -- we can extend Renamings
 ext :
   {gamma delta : Context} {sigma : Type} ->
   Renaming gamma delta ->
   Renaming (gamma -, sigma) (delta -, sigma)
-ext = {!!}
+ext renGammaDelta Z = Z
+ext renGammaDelta (S tauInExtGamma) = S (renGammaDelta tauInExtGamma)
 
 -- applying a renaming to a term
 -- in particular, we can create a new variable, like in shiftUp1
@@ -162,7 +166,9 @@ rename :
   Renaming gamma delta ->
   -- then we can also do the transition for terms
   {tau : Type} -> Lam gamma tau -> Lam delta tau
-rename = {!!}
+rename renGammaDelta (var x) = var (renGammaDelta x)
+rename renGammaDelta (app t1 t2) = app (rename renGammaDelta t1) (rename renGammaDelta t2)
+rename renGammaDelta (lam lamGammaTau) = lam (rename (ext renGammaDelta) lamGammaTau)
 
 -- again, as with untyped Lams, we need to explicitly specify what our context is
 -- because a single term is valid in many contexts
@@ -215,7 +221,7 @@ Substitution gamma delta = {tau : Type} -> tau In gamma -> Lam delta tau
 
 -- the substitution that replaces all variables with themselves
 idSubst : {gamma : Context} -> Substitution gamma gamma
-idSubst = {!!}
+idSubst tauInGamma = var tauInGamma
 
 -- we can extend substitutions
 -- we'll need to rename here, in order to "shift" all our variables
@@ -223,14 +229,17 @@ extSubstitution :
   {gamma delta : Context} {sigma : Type} ->
   Substitution gamma delta ->
   Substitution (gamma -, sigma) (delta -, sigma)
-extSubstitution = {!!}
+extSubstitution tauInGamma Z = var Z
+extSubstitution tauInGamma (S tauInExtGamma) = rename shift1Rename (tauInGamma tauInExtGamma)
 
 -- and finally, we can apply substitutions to terms
 substitute :
   {gamma delta : Context} {tau : Type} ->
   Substitution gamma delta ->
   Lam gamma tau -> Lam delta tau
-substitute = {!!}
+substitute tauInGamma (var t) = tauInGamma t
+substitute tauInGamma (app t1 t2) = app (substitute tauInGamma t1) (substitute tauInGamma t2)
+substitute tauInGamma (lam t) = lam (substitute (extSubstitution tauInGamma) t)
 
 -- a substitution that essentially performs one computation
 -- the idea here is that we have a situation like so
@@ -241,8 +250,10 @@ substitute = {!!}
 -- we need to substitute M for our free variable, but also not forget to *shift down*
 -- all our other variables, as they have just had one lambda removed
 reduceSubst : {gamma : Context} {tau : Type} -> Lam gamma tau -> Substitution (gamma -, tau) gamma
-reduceSubst = {!!}
+reduceSubst {gamma} {tau} lamGammaTau Z = lamGammaTau
+reduceSubst {gamma} {tau} lamGammaTau (S tauInExtGamma) = var tauInExtGamma 
 
+{-
 -- what we actually (might eventually) need is a single variable substitution
 -- this is due to the fact that when we want to calculate an expression, like
 -- (λx. λy. x y) z
