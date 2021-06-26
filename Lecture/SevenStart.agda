@@ -278,34 +278,41 @@ assoc (Discrete== X) refl refl refl = refl
 EMPTY : Set -> Category
 Obj (EMPTY X) = Zero
 _~>_ (EMPTY X) _ _ = X
-id~> (EMPTY X) = {!!}
-_>~>_ (EMPTY X) = {!!}
-left-id (EMPTY X) = {!!}
-right-id (EMPTY X) = {!!}
-assoc (EMPTY X) = {!!}
+id~> (EMPTY X) ()
+_>~>_ (EMPTY X) {()}
+left-id (EMPTY X) {()}
+right-id (EMPTY X) {()}
+assoc (EMPTY X) {()}
 
-{-
 -- we can always "flip" the arrows in a category, to get a "dual" notion of something
 -- very powerful concept
 Op : Category -> Category
-Obj (Op X) = Obj X
-_~>_ (Op X) x y = _~>_ X y x
-id~> (Op X) = {!!}
-_>~>_ (Op X) = {!!}
-left-id (Op X) = {!!}
-right-id (Op X) = {!!}
-assoc (Op X) f g h = {!!}
+Op catA = opCatA where 
+  opCatA : Category
+  Obj opCatA = Obj catA
+  _~>_ opCatA x y = _~>_ catA y x
+  id~> opCatA x = id~> catA x
+  _>~>_ opCatA f g = _>~>_ catA g f
+  left-id opCatA f = right-id catA f
+  right-id opCatA = left-id catA 
+  assoc opCatA {S} {T} {R} {Q} f g h = ==-symm (assoc catA h g f) -- there were tears and blood
 
 -- a product of two other categories - we want to "carry" our operations pointwise
 Product : Category -> Category -> Category
 Obj (Product X Y) = Obj X * Obj Y
-_~>_ (Product X Y) = {!!}
-id~> (Product X Y) = {!!}
-_>~>_ (Product X Y) = {!!}
+_~>_ (Product X Y) x y = _~>_ X (fst x) (fst y) * _~>_ Y (snd x) (snd y) -- afk
+id~> (Product X Y) x = idArr where
+  idArr : (X ~> fst x) (fst x) * (Y ~> snd x) (snd x)
+  fst idArr = id~> X (fst x) 
+  snd idArr = id~> Y (snd x)
+_>~>_ (Product X Y) {S}{T}{R} x y = comArr where
+  comArr : (X ~> fst .S) (fst .R) * (Y ~> snd .S) (snd .R)
+  fst comArr = {!  !}
+  snd comArr = ?{!   !}
 left-id (Product X Y) = {!!}
 right-id (Product X Y) = {!!}
 assoc (Product X Y) = {!!}
--}
+
 -- like homomorphisms
 record _=>_ (C D : Category) : Set where
   field
@@ -360,15 +367,20 @@ F-map->~> MAYBE f g =
        nothing -> refl
      }
 
-{-
 id : {A : Set} -> A -> A
 id x = x
 
 -- the identity functor
 -- does nothing
 ID : (C : Category) -> C => C
-ID = {!!}
+ID categ = idFunct where
+  idFunct : categ => categ
+  F-Obj idFunct x = x
+  F-map idFunct = {!   !}
+  F-map-id idFunct = {!   !}
+  F-map->~> idFunct  = {!   !}
 
+{-
 map : {A B : Set} -> (A -> B) -> List A -> List B
 map = {!!}
 
