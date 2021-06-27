@@ -8,7 +8,7 @@ open import Lib.Nat
 
 data Heap : Set where
   empty : Heap
-  node : Rank -> Priority -> Heap -> Heap -> Heap
+  node  : Rank -> Priority -> Heap -> Heap -> Heap
 
 -- nothing is preventing us from making heaps that break the invariant
 -- or from not preserving it in our functions
