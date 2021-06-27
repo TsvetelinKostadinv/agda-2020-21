@@ -60,7 +60,9 @@ merge {lower} heap1@(node {lx} {ly} {leqLowerlx} {leqLowerly} r1 p1 {leqLowerP1}
          (weakenHeap _ _ leqLowerlx left1) -- Leq p1 lx
         (merge (weakenHeap _ _ leqLowerly right1) heap2)
 merge {lower} heap1@(node {lx} {ly} {leqLowerlx} {leqLowerly} r1 p1 left1 right1) heap2@(node {rx} {ry} {leqLowerrx} {leqLowerry}  r2 p2 left2 right2) | inr x 
-    = mkNode lower {_} {Leq-refl lower} (weakenHeap lower rx leqLowerrx left2) (merge (weakenHeap lower ry leqLowerry right2) heap1)
+    = mkNode lower {_} {Leq-refl lower} 
+        (weakenHeap lower rx leqLowerrx left2) 
+        (merge (weakenHeap lower ry leqLowerry right2) heap1)
 
 -- 5.
 singleton : {lower : Priority} (x : Priority) -> Leq lower x -> Heap lower

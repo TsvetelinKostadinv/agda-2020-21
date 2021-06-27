@@ -25,9 +25,9 @@ Leq-refl n = <=-Leq (<=-refl n)
 
 Leq-trans : (n m k : Nat) -> Leq n m -> Leq m k -> Leq n k
 Leq-trans zero m k p q = <>
-Leq-trans (suc n) zero zero () q         -- Needed, cuz of the old version
-Leq-trans (suc n) (suc m) zero p ()      -- Needed, cuz of the old version
-Leq-trans (suc n) zero (suc k) () q      -- Needed, cuz of the old version
+Leq-trans (suc n) zero zero () q         -- Needed, cuz of the old version of Agda I have
+Leq-trans (suc n) (suc m) zero p ()      -- Needed, cuz of the old version of Agda I have
+Leq-trans (suc n) zero (suc k) () q      -- Needed, cuz of the old version of Agda I have
 Leq-trans (suc n) (suc m) (suc k) p q = Leq-trans n m k p q
 
 Priority : Set
@@ -81,3 +81,12 @@ min-Leq-right (suc n) zero = <>
 min-Leq-right (suc n) (suc m) rewrite min-sucs n m with decLeq n m 
 ... | inl x = x
 ... | inr x = Leq-refl m
+
+max : Nat -> Nat -> Nat
+max a b with decLeq a b
+max a b | inl x = b
+max a b | inr x = a
+
++N-assoc-no-braces : (n m k : Nat) -> (n +N m) +N k == n +N m +N k
++N-assoc-no-braces zero m k = refl
++N-assoc-no-braces (suc n) m k = ap suc (+N-assoc-no-braces n m k)
