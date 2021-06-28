@@ -31,19 +31,6 @@ mkNode {lr} {rr} p heapL heapR with decLeq rr lr
 mkNode {lr} {rr} p heapL heapR | inl x = node {_} {_} {x} p heapL heapR
 mkNode {lr} {rr} p heapL heapR | inr x rewrite +N-commut lr rr = node {_} {_} {x} p heapR heapL
 
-helper : (n m k p : Nat) -> n +N m +N suc (k +N p) == (k +N p) +N suc (n +N m)
-helper n m k p = 
-  n +N m +N suc (k +N p)
-    =[ ==-symm (+N-assoc-no-braces n m (suc (k +N p))) >=
-  (n +N m) +N suc (k +N p)
-    =[ +N-right-suc (n +N m) (k +N p) >=
-  suc ( (n +N m) +N (k +N p) )
-    =[ ap suc (+N-commut (n +N m) (k +N p)) >=
-  suc ((k +N p) +N (n +N m))
-    =[ ==-symm (+N-right-suc (k +N p) (n +N m)) >=
-  (k +N p) +N suc (n +N m)
-    QED
-
 {-# TERMINATING #-}
 merge :
   {lr rr : Rank} ->

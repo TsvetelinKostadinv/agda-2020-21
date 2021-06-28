@@ -90,3 +90,17 @@ max a b | inr x = a
 +N-assoc-no-braces : (n m k : Nat) -> (n +N m) +N k == n +N m +N k
 +N-assoc-no-braces zero m k = refl
 +N-assoc-no-braces (suc n) m k = ap suc (+N-assoc-no-braces n m k)
+
+-- deserves a better name, couldn't come up with one
+helper : (n m k p : Nat) -> n +N m +N suc (k +N p) == (k +N p) +N suc (n +N m)
+helper n m k p = 
+  n +N m +N suc (k +N p)
+    =[ ==-symm (+N-assoc-no-braces n m (suc (k +N p))) >=
+  (n +N m) +N suc (k +N p)
+    =[ +N-right-suc (n +N m) (k +N p) >=
+  suc ( (n +N m) +N (k +N p) )
+    =[ ap suc (+N-commut (n +N m) (k +N p)) >=
+  suc ((k +N p) +N (n +N m))
+    =[ ==-symm (+N-right-suc (k +N p) (n +N m)) >=
+  (k +N p) +N suc (n +N m)
+    QED

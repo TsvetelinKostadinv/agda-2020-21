@@ -216,7 +216,6 @@ two = node 2 one three
 -- u : Nat
 -- n : Nat
 
-{-
 
 -- used a module to introduce global vars
 -- in here, you can compare values for equality with _==?_
@@ -231,6 +230,7 @@ module listy {A : Set} {_==?_ : (x y : A) -> Dec (x == y)} where
     here : {xs : List A} -> x In (x ,- xs)
     there : {y : A} {xs : List A} -> x In xs -> x In (y ,- xs)
 
+{-
   +L-monoL-In : {y : A} {ys : List A} -> (xs : List A) -> y In ys -> y In xs +L ys
   +L-monoL-In [] yInYs = yInYs
   +L-monoL-In (x ,- xs) yInYs = there (+L-monoL-In xs yInYs)
@@ -353,7 +353,7 @@ module listy {A : Set} {_==?_ : (x y : A) -> Dec (x == y)} where
   Sub-trans-assoc (s-cons xsSubYs) (s-skip ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc (s-cons xsSubYs) ysSubZs zsSubVs)
   Sub-trans-assoc (s-skip xsSubYs) (s-skip ysSubZs) (s-cons zsSubVs) = ap s-skip (Sub-trans-assoc (s-skip xsSubYs) ysSubZs zsSubVs)
   Sub-trans-assoc xsSubYs ysSubZs (s-skip zsSubVs) = ap s-skip (Sub-trans-assoc xsSubYs ysSubZs zsSubVs)
-
+-}
 {-
 decNatEq : (n m : Nat) -> Dec (n == m)
 decNatEq = {!!}
