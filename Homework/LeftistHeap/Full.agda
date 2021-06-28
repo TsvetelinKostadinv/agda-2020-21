@@ -10,6 +10,7 @@ open import Lib.Sum
 open import Homework.LeftistHeap.Common
 open import Lecture.FourStart
 
+-- 0.
 data Heap (lower : Priority) : Rank -> Set where
     empty : Heap lower 0
     node : {r1 r2 : Rank} -> {_ : Leq r2 r1} 
@@ -17,11 +18,18 @@ data Heap (lower : Priority) : Rank -> Set where
             -> {_ : Leq lower p} -> {_ : Leq p x} -> {_ : Leq p y}  
             -> Heap x r1 -> Heap y r2 -> Heap lower (suc (r1 +N r2))
 
+-- 1.
+
+-- 2.
+
+-- 3.
 mkNode : {lr rr : Rank} {b : Priority} (p : Priority) -> Leq b p -> Heap p lr -> Heap p rr -> Heap b (suc (lr +N rr))
 mkNode {lr}{rr}  {b} p leqBP heapPLR heapPRR with decLeq rr lr
 mkNode {lr} {rr} {b} p leqBP heapPLR heapPRR | inl x = node {b} {_} {_} {x} {p} {p} p {leqBP} {Leq-refl p} {Leq-refl p} heapPLR heapPRR
 mkNode {lr} {rr} {b} p leqBP heapPLR heapPRR | inr x rewrite +N-commut lr rr = node {b} {_} {_} {x} {p} p {leqBP} {Leq-refl p} {Leq-refl p} heapPRR heapPLR
 
+
+-- 3.
 rank : {lower : Priority}{r : Rank} -> Heap lower r -> Rank
 rank {lower}{r} heap = r
 
@@ -53,6 +61,7 @@ merge {lr} {ll} {p} h1@(node p1 {p<=p1} {p1<=pl1} {p1<=pr2} l1 r1) h2@(node p2 {
             (weakenHeap p _ (Leq-trans p p2 _ p<=p2 p2<=prr2) r2) 
             (weakenHeap p _ (Leq-refl p) h1) )
 
+-- 4.
 singleton : (p x : Priority) -> Leq p x -> Heap p 1
 singleton p x p<=x = mkNode x p<=x empty empty
 
@@ -61,6 +70,7 @@ insert {r} {p} x heap with decLeq p x
 insert {r} {p} x heap | inl x1 = merge  (singleton p x x1) heap
 insert {r} {p} x heap | inr x1 = merge (singleton x x (Leq-refl x)) (weakenHeap x p x1 heap)
 
+-- 5.
 findMin : {p : Priority} {r : Rank} -> Heap p (suc r) -> Priority
 findMin (node p heap heap1) = p
 
@@ -70,6 +80,7 @@ delMin {p} (node p1 {p<=p1} {p1<=lp} {p1<=rp} left right)
         (weakenHeap _ _ (Leq-trans p p1 _ p<=p1 p1<=lp) left) 
         (weakenHeap _ _ (Leq-trans p p1 _ p<=p1 p1<=rp) right)
 
+-- 6.
 minimum : List Priority -> Priority
 minimum [] = 0 -- should have been a Maybe Priority, but then we can't use in the type signature
 minimum (x ,- xs) with decLeq x (minimum xs)
@@ -95,8 +106,8 @@ minimum-is-lowest (suc x) [] = <>
 minimum-is-lowest x tail@(x1 ,- xs) with decLeq x (minimum tail)
 minimum-is-lowest x tail@(x1 ,- xs) | inl x<=min = Leq-refl x
 minimum-is-lowest x tail@(x1 ,- xs) | inr min<=x with decLeq x1 (minimum xs)
-minimum-is-lowest x (x1 ,- xs) | inr min<=x | inl x2 = min<=x
-minimum-is-lowest x (x1 ,- xs) | inr min<=x | inr x2 = min<=x
+minimum-is-lowest x tail@(x1 ,- xs) | inr min<=x | inl x2 = min<=x
+minimum-is-lowest x tail@(x1 ,- xs) | inr min<=x | inr x2 = min<=x
 
 {-# TERMINATING #-}
 fromList : (xs : List Priority) -> Heap (minimum xs) (length xs)

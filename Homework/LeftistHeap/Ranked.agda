@@ -9,6 +9,7 @@ open import Lib.Zero
 open import Lib.Nat
 open import Lib.Eq
 
+-- 0.
 -- type index, since we will need it to vary for the different constructors
 data Heap : Rank -> Set where
   empty : Heap 0
@@ -17,8 +18,12 @@ data Heap : Rank -> Set where
           -> Heap r1 -> Heap r2 -> Heap (suc (r1 +N r2))
 
 -- 1.
+correct : Heap 3
+correct = node zero (node 1 empty empty) (node 2 empty empty)
 
 -- 2.
+wrongOrder : Heap 3
+wrongOrder = node 121212 (node 2 empty empty) (node zero empty empty)
 
 -- 3.
 rank : {r : Rank} -> Heap r -> Rank
